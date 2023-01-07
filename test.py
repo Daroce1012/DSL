@@ -3,7 +3,7 @@ from AST.Construction import *
 from Parser.Parser import LR1Parser
 from Tokenizer.Tokenizer import tokenize
 from AST.Nodes import *
-
+import os 
 # Inicializa la gramatica
 g = Grammar()
 
@@ -23,16 +23,6 @@ def_attr_sex, def_attr_age,def_attr_name, def_attr_add, def_attr_len,def_attr_re
     = g.non_terminals('<def_attr_sex>  <def_attr_age> <def_attr_name> <def_attr_add> <def_attr_len> <def_attr_remove>')
 def_find, def_breast_cancer,def_ovarian_cancer,def_pancreatic_cancer \
     = g.non_terminals('<def_find> <def_breast_cancer> <def_ovarian_cancer> <def_pancreatic_cancer>')
-# feature_list, def_attr_dependencies, def_attr_goals, def_attr_add_element, def_attr_set_category, def_set_list,\
-#                                                         def_add_list, def_remove_list, def_search_good_strategy \
-#     = g.non_terminals('<feature-list> <def-attr-dependencies>  <def-attr-goals> '
-#                       '<def-attr-add-element> <def-attr-set-category> <def-set-list> <def-add-list> <def-remove-list> '
-#                       '<def-search-good-strategy>')
-# let_var, def_func, print_stat, arg_list, def_return = \
-#     g.non_terminals('<let-var> <def-func> <print-stat> <arg-list> <def-return>')          # Definiciones
-# class_list, def_class, element_expr, student_expr, activities_expr, list_expr \
-#     = g.non_terminals('<class-list> <def-class> <element-expr>  <student-expr> <activities-expr> <list-expr>')
-
 # Terminals
 idx, num, stringx, ifx, elsex, forx, intx, strx, boolx, funcx, printx, returnx \
     = g.terminals('id number string if else for int str bool func print return')
@@ -43,10 +33,6 @@ patientx, name, sex, age, addx, removex, lenx, find, breast_cancer, ovarian_canc
 dot, semi, comma, opar, cpar, colon, okey, ckey, o_bracket, c_bracket = g.terminals('dot semi comma opar cpar colon o_key c_key o_bracket c_bracket')
 equal, plus, minus, star, div, andx, orx, true, false = g.terminals('assign plus minus mul div and or true false')
 leq, geq, equalx, notx, less, greater = g.terminals('leq geq equal not less greater')
-# ifx, elsex, let, defx, printx, returnx, classx, new, element, student, activity, dependencies, goals, add_element, \
-# set_category, addx, removex, search_good_strategy = g.terminals('if else let def print return class new Element Student
-#                                                     Activity dependencies goals '
-#                            'add_element set_category add remove search_good_strategy')
 
 # Productions
 program %= stat_list,          lambda h, s: ProgramNode(s[1])
@@ -92,19 +78,7 @@ int_var  %= intx  + idx + equal + expr, lambda h, s: IntVarDeclarationNode(s[2],
 #bool_var %= boolx + idx + equal + expr, lambda h, s: BoolVarDeclarationNode(s[2], s[4])
 #str_var  %= strx  + idx + equal + expr, lambda h, s: StrVarDeclarationNode(s[2], s[4])
 
-# let_var %= let + idx + equal + expr, lambda h, s: VarDeclarationNode(s[2], s[4])
-# let_var %= let + idx + equal + element_expr, lambda h, s: VarDeclarationNode(s[2], s[4])
-# let_var %= let + idx + equal + student_expr, lambda h, s: VarDeclarationNode(s[2], s[4])
-# let_var %= let + idx + equal + activities_expr, lambda h, s: VarDeclarationNode(s[2], s[4])
-# let_var %= let + idx + equal + list_expr, lambda h, s: VarDeclarationNode(s[2], s[4])
 list_expr %= o_bracket + expr_list + c_bracket, lambda h, s: ListExprNode(s[2])
-
-#def_search_good_strategy %= search_good_strategy + opar + expr + comma +expr + comma + expr +cpar, \
-#                            lambda h, s: SearchGoodStrategyNode(s[3], s[5], s[7])
-#def_set_list %= idx + o_bracket + expr + c_bracket + equal + expr, lambda h, s: ListSetNode(s[1], s[3], s[6])
-#def_add_list %= idx + dot + addx + opar + expr + cpar, lambda h, s: AddListNode(s[1], s[5])
-#def_remove_list %= idx + dot + removex + opar + expr + cpar, lambda h, s: RemoveListNode(s[1], s[5])
-#expr %= lenx + opar + idx + cpar, lambda h, s: LenListNode(s[3])
 
 def_attr_name   %= idx + dot + name + equal + expr, lambda h,s: NameError(s[1], s[5])
 def_attr_age    %= idx + dot + age + equal + expr, lambda h,s: AgeNode(s[1], s[5])
@@ -229,4 +203,16 @@ def errors_parser(errors, tokens):
         err.append(f'{i} -> {value} no ha sido bien definido :(')
     return err
 
-print(execute(a))
+
+def Read():
+    archive = open("code.txt")
+    text = ''
+    line = archive.readline()
+    while(line):
+        text+=line
+        line = archive.readline() 
+    archive.close()
+    return text
+
+r = Read()
+print(execute(r))
