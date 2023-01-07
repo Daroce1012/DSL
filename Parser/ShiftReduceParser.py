@@ -17,6 +17,7 @@ class ShiftReduce:
         cursor = 0
         output = []
         operations = []
+        errors = []
 
         while True:
             state = stack[-1]
@@ -40,9 +41,10 @@ class ShiftReduce:
 
                 # OK case
                 elif action == self.OK:
-                    return output, operations if ope else output
+                    return errors, output, operations if ope else output
                 # Invalid case
                 else:
                     raise NameError
             except KeyError:
-                raise Exception('error')
+                errors.append(tokens[cursor])
+                return errors, output, operations if ope else output

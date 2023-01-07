@@ -1,93 +1,100 @@
 from typing import NamedTuple
 import re
 
-
 class Token(NamedTuple):
     type: str
     value: str
 
 
 def tokenize(code):
-    ret = []
+    result = [] # Devuelve un array con todos los tokens
+    errors = [] # Contiene los errores del tokenizer
     
-    keywords = {'int','str','print','input', 'if', 'else', 'for','func' ,'patient', 'Simulate',
-                'return', '<=', '>=', '==', '!=', '<', '>', 'and', 'or','Add','Len','Find'}
-    
-    token_specification = [
-        ('eof', r'eof'),               # eof
-        ('int', r'int'),               # int    
-        ('str', r'str'),               # str    
-        ('patient', r'patient'),       # Patient
-        ('if',  r'if'),                # if
-        ('else', r'else'),             # else
-        ('for', r'for'),               # for
-        ('func',r'func'),              # func
+    tokens = {
+        'eof'    : r'eof',               # eof
+        'int'    : r'int',               # int    
+        'str'    : r'str',               # str    
+        'bool'   : r'bool',              # bool
+        'patient': r'patient',           # Patient
+        'if'     : r'if',                # if
+        'else'   : r'else',              # else
+        'for'    : r'for',               # for
+        'func'   : r'func',              # func
        
         # Comparison operators
-        ('leq', r'<='),                # less than or equal
-        ('geq', r'>='),                # greater than or equal
-        ('equal', r'=='),              # equal
-        ('not', r'!='),                # not equal
-        ('less', r'[<]'),              # less than
-        ('greater', r'[>]'),           # greater than
+        'leq'    : r'<=',                # less than or equal
+        'geq'    : r'>=',                # greater than or equal
+        'equal'  : r'==',                # equal
+        'not'    : r'!=',                # not equal
+        'less'   : r'[<]',               # less than
+        'greater': r'[>]',               # greater than
 
-        ('o_bracket', r'\('),          # (
-        ('c_bracket', r'\)'),          # )
-        ('o_curlybrackets',r'\{'),     # {
-        ('c_curlybrackets',r'\}'),     # }
+        'o_bracket': r'\(',              # (
+        'c_bracket': r'\)',              # )
+        'o_key'    : r'\{',              # {
+        'c_key'    : r'\}',              # }
         
-        ('comma', r','),               # comma
-        ('semi', r';'),                # ;
-       #('colon', r':'),               # colon
-       #('quotation',r'"'),            # quotation 
-
+        'comma'    : r',',               # comma
+        'semi'     : r';',               # ;
+        #'colon': r':',                  # :
+        #'quotation':r'"',               # "
+        'dot'      : r'\.',              # . 
+        
         # Logic operators
-        ('and', r'and'),               # and
-        ('or', r'or'),                 # or
+        'and'      : r'and',             # and
+        'or'       : r'or',              # or
 
-        ('print', r'print'),           # print
-        ('input', r'input'),           # input
+        'print'    : r'print',           # print
+        #'input'   : r'input',           # input
 
-        ('number', r'\d+(\.\d*)?'),    # Integer or decimal number
-        ('id', r'[A-Za-z]+'),          # Identifiers
-        ('assign', r'='),              # Assignment operator
-        
+        'comment'  : r'[\#](\w+)#|[\#](\w+)[ \t]+(\w+)#|'   ,
+        'number'   : r'\d+(\.\d*)?',     # Integer or decimal number
+        'string'   : r'[\"](\w+)[\"]|[\"](\w+)[ \t]+(\w+)[\"]',
+        'id'       : r'[A-Za-z]+',       # Identifiers
+        'assign'   : r'=',               # Assignment operator
         
         # Arithmetic operators
-        ('plus', r'[+]'),              # plus
-        ('minus', r'[\-]'),            # minus
-        ('mul', r'[*]'),               # mul
-        ('div', r'[/]'),               # div
+        'plus'     : r'[+]',             # plus
+        'minus'    : r'[\-]',            # minus
+        'mul'      : r'[*]',             # mul
+        'div'      : r'[/]',             # div
 
-        ('newline',  r'\n'),           # Line endings
-        ('skip',     r'[ \t]+'),       # Skip over spaces and tabs
-        ('mismatch', r'.'),            # Any other character
-    ]
-    tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in token_specification)
+        'newline'  : r'\n',              # Line endings
+        'skip'     : r'[ \t]+',          # Skip over spaces and tabs
+        'salt'     : r'\r',
+        'mismatch' : r'.',               # Any other character
+        }
+    
+    
+    token_type = list(tokens.items())
+    keys = tokens.keys()
+    tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in token_type)
     code += ' eof'
     for mo in re.finditer(tok_regex, code):
         kind = mo.lastgroup
         value = mo.group()
         if kind == 'number':
             value = int(value)
-        elif kind == 'id' and value in keywords:
+        elif kind == 'true' or kind == 'false':
+            value = eval(value)    
+        elif kind == 'id' and value in keys:
             kind = value
-        elif kind == 'newline':
-            continue
-        elif kind == 'skip':
+        elif kind == 'newline'or kind == 'comment' or kind == 'skip' or kind =='salt':
             continue
         elif kind == 'mismatch':
-            raise RuntimeError(f'{value!r} unexpected')
-        ret.append(Token(kind, value))
-    return ret
+            errors.append(f'{value!r} unexpected')
+        result.append(Token(kind, value))
+    return errors,result
 
 
 # statements = '''
-#     If (5 >= 6 )
+#     if (5 >= 6 )
 #     {
 #         str total = 4 ;
 #     }
         
 # '''
 
-#print(tokenize(statements))
+# #tokenize(statements)
+# print(tokenize(statements))
+
