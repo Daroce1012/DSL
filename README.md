@@ -17,7 +17,7 @@
 # Arquitectura general del compilador
  El proyecto está dividido en 3 fases. Cada una de estas fases fueron implementadas desde cero con ayuda de las clase prácticas de la asignatura.
    1. Tokenización: Este se encarga de todo el proceso de tokenización de la entrada y detecta algunos errores como la de comandos no definidos.
-   2. Parser: Este se encarga de todo el proceso de confección del parse shiftreduce para una gramática LR1.
+   2. Parser: Este se encarga de todo el proceso de confección del parse shiftreduce .
    3. Ast: Por ultimo en esta fase se lleva a cabo la confección del Ast con ayuda de Nodes.py, asi como su recorrido y evaluación. 
     
 # Ejecución
