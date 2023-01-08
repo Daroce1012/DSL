@@ -5,7 +5,6 @@ class Node:
     def check_semantic(self, context, errors):
         pass
 
-
 class ProgramNode(Node):
     def __init__(self, declarations):
         self.declarations = declarations
@@ -54,7 +53,7 @@ class PatientNode(ExpressionNode):
         pass
 
     def evaluate(self, context, errors, ans):
-        patient = Patient(self.name,self.age,self.sex)
+        patient = Patient(self.name,self.sex,self.age)
         return patient
 
 
@@ -75,7 +74,7 @@ class AddNode(DeclarationNode):
         element = self.element.evaluate(context, errors, ans)
         patient.add(element) 
 
-class LenNode(DeclarationNode):
+class LenNode(ExpressionNode):
     def __init__(self, name_patient):
         self.name_patient = name_patient
 
@@ -83,7 +82,7 @@ class LenNode(DeclarationNode):
         if not context.check_var_defined(self.name_patient):
             errors.append(f'Patient {self.name_patient} no definida :(')
 
-    def execute(self, context, errors, ans):
+    def evaluate(self, context, errors, ans):
         if len(errors) != 0:
             return
         patient = context.get_local_variable_info(self.name_patient)
@@ -106,6 +105,7 @@ class RemoveNode(DeclarationNode):
         patient.remove(element) 
 
 #Atributos
+    
 
 class NameNode(DeclarationNode):
     def __init__(self, name_patient, name):
@@ -177,10 +177,27 @@ class ReturnNode(DeclarationNode):
         pass
 
 
-# class AttrDeclarationNode(DeclarationNode):
-#     def __init__(self, idx):
-#         self.id = idx
+class AttrDeclarationNode(DeclarationNode):
+    def __init__(self, idx):
+        self.id = idx
 
+class VarDeclarationNode(DeclarationNode):
+    def __init__(self, idx, expr):
+        self.idx = idx
+        self.expr = expr
+
+    def check_semantic(self, context, errors):
+        pass
+
+    def execute(self, context, errors, ans):
+        if len(errors) != 0:
+            return
+        if context.check_var_defined(self.idx):
+            errors.append(f'Variable {self.idx} ya definida :(')
+        if isinstance(self.expr, ExpressionNode):
+            context.def_var(self.idx, self.expr.evaluate(context, errors, ans))
+        else:
+            context.def_var(self.idx, self.expr)
 
 class ForNode(DeclarationNode):
     def __init__(self, idx, idx_value, expr, idx_counter, counter_one, counter_two, body):
@@ -233,8 +250,71 @@ class IntVarDeclarationNode(DeclarationNode):
             errors.append(f'Variable {self.idx} ya definida :(')
         if isinstance(self.expr, ExpressionNode):
             value = self.expr.evaluate(context, errors, ans)
-            if int(value) is not int :
+            if not isinstance(value,int):
                 errors.append(f'variable: {self.idx} no puede convertirse a entero')
+            else : context.def_var(self.idx, value)
+        else:
+            context.def_var(self.idx, self.expr)
+
+class StrVarDeclarationNode(DeclarationNode):
+    def __init__(self, idx, expr):
+        self.idx = idx
+        self.expr = expr
+
+    def check_semantic(self, context, errors):
+        pass
+
+    def execute(self, context, errors, ans):
+        if len(errors) != 0:
+            return
+        if context.check_var_defined(self.idx):
+            errors.append(f'Variable {self.idx} ya definida :(')
+        if isinstance(self.expr, ExpressionNode):
+            value = self.expr.evaluate(context, errors, ans)
+            if not isinstance(value,str):
+                errors.append(f'variable: {self.idx} no puede convertirse a string')
+            else : context.def_var(self.idx, value)
+        else:
+            context.def_var(self.idx, self.expr)
+
+class BoolVarDeclarationNode(DeclarationNode):
+    def __init__(self, idx, expr):
+        self.idx = idx
+        self.expr = expr
+
+    def check_semantic(self, context, errors):
+        pass
+
+    def execute(self, context, errors, ans):
+        if len(errors) != 0:
+            return
+        if context.check_var_defined(self.idx):
+            errors.append(f'Variable {self.idx} ya definida :(')
+        if isinstance(self.expr, ExpressionNode):
+            value = self.expr.evaluate(context, errors, ans)
+            if not isinstance(value,bool):
+                errors.append(f'variable: {self.idx} no puede convertirse a bool')
+            else : context.def_var(self.idx, value)
+        else:
+            context.def_var(self.idx, self.expr)
+            
+class PatientVarDeclarationNode(DeclarationNode):
+    def __init__(self, idx, expr):
+        self.idx = idx
+        self.expr = expr
+
+    def check_semantic(self, context, errors):
+        pass
+
+    def execute(self, context, errors, ans):
+        if len(errors) != 0:
+            return
+        if context.check_var_defined(self.idx):
+            errors.append(f'Variable {self.idx} ya definida :(')
+        if isinstance(self.expr, ExpressionNode):
+            value = self.expr.evaluate(context, errors, ans)
+            if not isinstance(value,Patient):
+                errors.append(f'variable: {self.idx} no puede convertirse a Patient')
             else : context.def_var(self.idx, value)
         else:
             context.def_var(self.idx, self.expr)
@@ -651,82 +731,6 @@ class ListGetNode(ExpressionNode):
         return None
 
 
-# class ListSetNode(DeclarationNode):
-#     def __init__(self, idx, pos, expr):
-#         self.idx = idx
-#         self.pos = pos
-#         self.expr = expr
-
-#     def check_semantic(self, context, errors):
-#         if not context.check_var_defined(self.idx):
-#             errors.append(f'Lista {self.idx} no definida :(')
-#             return
-#         pos = self.pos.evaluate(context, errors, None)
-#         if pos < 0 or pos >= len(context.get_local_variable_info(self.idx)):
-#             errors.append(f'Posición {pos} fuera de rango :(')
-
-#     def execute(self, context, errors, ans):
-#         if len(errors) != 0:
-#             return
-#         listx = context.get_local_variable_info(self.idx)
-#         pos = self.pos.evaluate(context, errors, ans)
-#         if len(errors) == 0:
-#             listx[pos] = self.expr.evaluate(context, errors, ans)
-
-# class LenListNode(ExpressionNode):
-#     def __init__(self, name):
-#         self.name = name
-
-#     def check_semantic(self, context, errors):
-#         if not context.check_var_defined(self.name):
-#             errors.append(f'Lista {self.name} no definida :(')
-#             return
-#         listx = context.get_local_variable_info(self.name)
-#         if not isinstance(listx, list):
-#             errors.append(f'{self.name} no es una lista definida :(')
-#             return
-
-#     def evaluate(self, context, errors, ans):
-#         if len(errors) != 0:
-#             return
-#         listx = context.get_local_variable_info(self.name)
-#         return len(listx)
-
-
-# class AddListNode(DeclarationNode):
-#     def __init__(self, idx, expr):
-#         self.idx = idx
-#         self.expr = expr
-
-#     def check_semantic(self, context, errors):
-#         if not context.check_var_defined(self.idx):
-#             errors.append(f'Lista {self.idx} no definida :(')
-#             return
-
-#     def execute(self, context, errors, ans):
-#         if len(errors) != 0:
-#             return
-#         listx = context.get_local_variable_info(self.idx)
-#         listx.append(self.expr.evaluate(context, errors, ans))
-
-
-# class RemoveListNode(DeclarationNode):
-#     def __init__(self, idx, expr):
-#         self.idx = idx
-#         self.expr = expr
-
-#     def check_semantic(self, context, errors):
-#         if not context.check_var_defined(self.idx):
-#             errors.append(f'Lista {self.idx} no definida :(')
-#             return
-
-#     def execute(self, context, errors, ans):
-#         if len(errors) != 0:
-#             return
-#         listx = context.get_local_variable_info(self.idx)
-#         listx.remove(self.expr.evaluate(context, errors, ans))
-
-
 class PrintNode(DeclarationNode):
     def __init__(self, expr):
         self.expr = expr
@@ -741,7 +745,6 @@ class PrintNode(DeclarationNode):
         if not len(errors):
             ans.append(result)
 
-#students_strats = {}
 
 class FindNode(ExpressionNode):
     def __init__(self, patient, condition):
@@ -753,11 +756,11 @@ class FindNode(ExpressionNode):
             errors.append(f'Patient {self.patient} no definido :(')
 
     def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.name)
-        condition = self.condition.evaluate(context, errors, ans)
+        patient = context.get_local_variable_info(self.patient)
+       # condition = self.condition.evaluate(context, errors, ans)
         if len(errors) != 0:
             return
-        return Find(patient,condition)
+        return Find(patient,self.condition)
 
 class BreastCancerNode(ExpressionNode):
     def __init__(self, patient):
@@ -768,7 +771,7 @@ class BreastCancerNode(ExpressionNode):
             errors.append(f'Patient {self.patient} no definido :(')
 
     def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.name)
+        patient = context.get_local_variable_info(self.patient)
         if len(errors) != 0:
             return
         return BreastCancer(patient)
@@ -782,7 +785,7 @@ class OvarianCancerNode(ExpressionNode):
             errors.append(f'Patient {self.patient} no definido :(')
 
     def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.name)
+        patient = context.get_local_variable_info(self.patient)
         if len(errors) != 0:
             return
         return OvarianCancer(patient)
@@ -796,27 +799,48 @@ class PancreaticCancerNode(ExpressionNode):
             errors.append(f'Patient {self.patient} no definido :(')
 
     def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.name)
+        patient = context.get_local_variable_info(self.patient)
         if len(errors) != 0:
             return
         return PancreaticCancer(patient)
 
+class GetNameNode(ExpressionNode):
+    def __init__(self, patient):
+        self.patient = patient
 
-# class SearchGoodStrategyNode(ExpressionNode):
-#     def __init__(self, elements, activities, student):
-#         self.elements = elements
-#         self.activities = activities
-#         self.student = student
+    def check_semantic(self, context, errors):
+        if not context.check_var_defined(self.patient):
+            errors.append(f'Patient {self.patient} no definido :(')
 
-#     def check_semantic(self, context, errors):
-#         pass
+    def evaluate(self, context, errors, ans):
+        patient = context.get_local_variable_info(self.patient)
+        if len(errors) != 0:
+            return
+        return patient.name
+class GetSexNode(ExpressionNode):
+    def __init__(self, patient):
+        self.patient = patient
 
-#     def evaluate(self, context, errors, ans):
-#         element = self.elements.evaluate(context, errors, ans)
-#         activities = self.activities.evaluate(context, errors, ans)
-#         student = self.student.evaluate(context, errors, ans)
-#         env = Environment(element, activities, rules, rules_params, student, Categorizer())
-#         res = search_good_strategy(env)
-#         students_strats[student] = [element, res]
-#         return res
+    def check_semantic(self, context, errors):
+        if not context.check_var_defined(self.patient):
+            errors.append(f'Patient {self.patient} no definido :(')
+
+    def evaluate(self, context, errors, ans):
+        patient = context.get_local_variable_info(self.patient)
+        if len(errors) != 0:
+            return
+        return patient.sex
+class GetAgeNode(ExpressionNode):
+    def __init__(self, patient):
+        self.patient = patient
+
+    def check_semantic(self, context, errors):
+        if not context.check_var_defined(self.patient):
+            errors.append(f'Patient {self.patient} no definido :(')
+
+    def evaluate(self, context, errors, ans):
+        patient = context.get_local_variable_info(self.patient)
+        if len(errors) != 0:
+            return
+        return patient.age
 

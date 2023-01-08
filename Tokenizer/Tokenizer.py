@@ -15,11 +15,22 @@ def tokenize(code):
         'int'    : r'int',               # int    
         'str'    : r'str',               # str    
         'bool'   : r'bool',              # bool
-        'patient': r'patient',           # Patient
+        'Patient': r'Patient',           # Patient
         'if'     : r'if',                # if
         'else'   : r'else',              # else
         'for'    : r'for',               # for
         'func'   : r'func',              # func
+        
+        'name'            : r'name',       
+        'sex'             : r'sex',
+        'age'             : r'age',
+        'add'             : r'add',
+        'remove'          : r'remove',
+        'len'             : r'len',
+        'Find'            : r'Find',
+        'BreastCancer'    : r'BreastCancer',
+        'OvarianCancer'   : r'OvarianCancer',
+        'PancreaticCancer': r'PancreaticCancer',
        
         # Comparison operators
         'leq'    : r'<=',                # less than or equal
@@ -43,13 +54,15 @@ def tokenize(code):
         # Logic operators
         'and'      : r'and',             # and
         'or'       : r'or',              # or
-
+        'return'   : r'return',          # return
         'print'    : r'print',           # print
         #'input'   : r'input',           # input
 
         'comment'  : r'[\#](\w+)#|[\#](\w+)[ \t]+(\w+)#|'   ,
         'number'   : r'\d+(\.\d*)?',     # Integer or decimal number
         'string'   : r'[\"](\w+)[\"]|[\"](\w+)[ \t]+(\w+)[\"]',
+        'true'     : r'True',
+        'false'    : r'False',
         'id'       : r'[A-Za-z]+',       # Identifiers
         'assign'   : r'=',               # Assignment operator
         
@@ -77,6 +90,8 @@ def tokenize(code):
             value = int(value)
         elif kind == 'true' or kind == 'false':
             value = eval(value)    
+        elif kind == 'string':
+            value = eval(value)
         elif kind == 'id' and value in keys:
             kind = value
         elif kind == 'newline'or kind == 'comment' or kind == 'skip' or kind =='salt':

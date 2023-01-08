@@ -9,7 +9,7 @@ class Patient():
         return self.symptoms.append(symptom)
 
     def remove(self,symptom):
-        return self.symptomsremove(symptom)
+        return self.symptoms.remove(symptom)
     
     def len(self):
         return len(self.symptoms)    
@@ -51,3 +51,5 @@ def PancreaticCancer(patient):
 #--------Prueba-------------
 #p = Patient("Fernando",35)
 #print(p.symptoms)       
+
+
