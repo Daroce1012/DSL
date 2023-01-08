@@ -37,19 +37,5 @@ def PancreaticCancer(patient):
         return True
     return False  
     
-    
-                
-            
-# class Condition():
-#     def __init__(self,name,*symptoms):
-#         self.name = name
-#         self.symptoms = list(symptoms)
-        
-#     # def add(self,symptom):
-#     #     self.symptoms.append(symptom)    
-       
-#--------Prueba-------------
-#p = Patient("Fernando",35)
-#print(p.symptoms)       
 
 

@@ -15,8 +15,8 @@ func_call, expr_list = g.non_terminals('<func-call> <expr-list>')  # Llamada de 
 stat_list, stat = g.non_terminals('<stat_list> <stat>')            # Ordenes y listas de ordenes
 if_decl, if_else_decl, for_decl = g.non_terminals('<if-decl> <if-else-decl> <for_decl>')  # Declaraciones 
 
-int_var,str_var,bool_var,patient_var, def_func, print_stat, arg_list, def_return = \
-    g.non_terminals('<int-var> <str-var> <patient-var> <bool-var> <def-func> <print-stat> <arg-list> <def-return>')          # Definiciones
+redef_var,int_var,str_var,bool_var,patient_var, def_func, print_stat, arg_list, def_return = \
+    g.non_terminals('<redef_var> <int-var> <str-var> <patient-var> <bool-var> <def-func> <print-stat> <arg-list> <def-return>')          # Definiciones
 patient_expr, list_expr = g.non_terminals('<patient-expr> <list-expr>')
 
 def_name,def_age,def_sex = g.non_terminals('<def_name> <def_age> <def_sex>')
@@ -49,6 +49,7 @@ stat_list %= stat + stat_list, lambda h, s: [s[1]] + s[2]
 stat %= str_var + semi,             lambda h, s: s[1]
 stat %= int_var + semi,             lambda h, s: s[1]
 stat %= bool_var+ semi,             lambda h, s: s[1]
+stat %= redef_var+semi,             lambda h, s: s[1]
 stat %= patient_var + semi,         lambda h, s: s[1]    
 stat %= def_func,                   lambda h, s: s[1]
 stat %= print_stat + semi,          lambda h, s: s[1]
@@ -81,9 +82,11 @@ for_decl %= forx + o_bracket + idx + equal + num + semi + expr + semi + idx + mi
             lambda h, s: ForNode(s[3], s[5], s[7], s[9], s[10], s[11], s[14])
 
     # Definiciones
-def_return %= returnx + expr, lambda h, s: ReturnNode(s[2])
-print_stat %= printx + expr, lambda h, s: PrintNode(s[2])
+def_return  %= returnx + expr, lambda h, s: ReturnNode(s[2])
+print_stat  %= printx + expr, lambda h, s: PrintNode(s[2])
 
+redef_var   %= idx + equal + expr,         lambda h, s: RedefVarDeclarationNode(s[1], s[3])
+redef_var   %= idx + equal + patient_expr, lambda h, s: RedefVarDeclarationNode(s[1], s[3])
 int_var     %= intx  + idx + equal + expr, lambda h, s: IntVarDeclarationNode(s[2], s[4])
 bool_var    %= boolx + idx + equal + expr, lambda h, s: BoolVarDeclarationNode(s[2], s[4])
 str_var     %= strx  + idx + equal + expr, lambda h, s: StrVarDeclarationNode(s[2], s[4])
@@ -236,17 +239,50 @@ print PancreaticCancer(p);
 p.remove("secrecion");
 print Find(p,"secrecion");
 print p.len();
-'''
-a ='''
-Patient p = Patient ("Roberto","m",45);
-p.add("dolor"); 
+p.add("dolor");
 func Cabeza(p)
 {
-   if Find(p,"dolor"){
-       return True;
-   }
+   return Find(p,"dolor") and False;
 } 
 print Cabeza(p);
+for(i=1;i<3;i++)
+{
+   print i;
+}
+func fac(n){
+    if(n <= 1){
+        int x = 1;
+    }
+    else{
+        int x = n*fac(n-1);
+    }    
+    return x;
+}
+print fac(5);
+func f (a,b){ int c = a+b; return c; }
+print f( 5, 7);
+int z = 89;
+p = Patient ("Daniela","f",22);
+print p.name;
+z = 50;
+print z;
+
+'''
+
+a ='''
+Patient p = Patient ("Roberto","m",45);
+p.add("dolor");
+func Cabeza(p)
+{
+   return Find(p,"dolor") and False;
+} 
+print Cabeza(p);
+'''
+h='''
+for(i=1;i<3;i++)
+{
+   print i;
+}
 '''
 
 fac = '''
@@ -262,6 +298,20 @@ func fac(n){
 print fac(5);
 '''
 
+f = '''
+func SUM(x,y){
+int z = 50;
+ return x+z;
+}
+
+if (3 < 2 or False and True){
+print "Hello";
+}
+else{
+print SUM(4,5);
+}
+ '''
+
 
 p = '''
 func f (a,b){ int c = a+b; return c; }
@@ -269,4 +319,9 @@ print f( 5, 7);
 
 '''
 #
-print(execute(a))
+z = '''
+Patient p = Patient ("Roberto","m",45);
+p = Patient ("Daniela","f",22);
+print p.name;
+'''
+print(execute(b))

@@ -174,7 +174,11 @@ class ReturnNode(DeclarationNode):
         self.expr.check_semantic(context, errors)
 
     def execute(self, context, errors, ans):
+        #value = self.expr.evaluate(context, errors, ans)
+        #if not len(errors):
+            #ans.append(value)
         pass
+        
 
 
 class AttrDeclarationNode(DeclarationNode):
@@ -234,7 +238,28 @@ class ForNode(DeclarationNode):
                 value = child.get_local_variable_info(self.idx) - 1
             child.redef_var(self.idx, value)
 
-#Ver si funciona y hacer asi el del bool y str
+class RedefVarDeclarationNode(DeclarationNode):
+    def __init__(self, idx, expr):
+        self.idx = idx
+        self.expr = expr
+
+    def check_semantic(self, context, errors):
+        pass
+
+    def execute(self, context, errors, ans):
+        if len(errors) != 0:
+            return
+        if context.check_var_defined(self.idx):
+            var = context.get_local_variable_info(self.idx)
+            if isinstance(self.expr, ExpressionNode):
+                value = self.expr.evaluate(context, errors, ans)
+                if type(var) is not type(value):
+                    errors.append(f'variable: {self.idx} no puede convertirse')
+                else : context.redef_var(self.idx, value)
+        else:
+            errors.append(f'Variable {self.idx} no ha sido definida :(')
+
+
 class IntVarDeclarationNode(DeclarationNode):
     def __init__(self, idx, expr):
         self.idx = idx
@@ -291,7 +316,7 @@ class BoolVarDeclarationNode(DeclarationNode):
         if context.check_var_defined(self.idx):
             errors.append(f'Variable {self.idx} ya definida :(')
         if isinstance(self.expr, ExpressionNode):
-            value = self.expr.evaluate(context, errors, ans)
+            value =  self.expr.evaluate(context, errors, ans)
             if not isinstance(value,bool):
                 errors.append(f'variable: {self.idx} no puede convertirse a bool')
             else : context.def_var(self.idx, value)

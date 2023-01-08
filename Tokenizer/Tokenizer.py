@@ -21,13 +21,13 @@ def tokenize(code):
         'for'    : r'for',               # for
         'func'   : r'func',              # func
         
-        'name'            : r'name',       
-        'sex'             : r'sex',
-        'age'             : r'age',
-        'add'             : r'add',
-        'remove'          : r'remove',
-        'len'             : r'len',
-        'Find'            : r'Find',
+        'name'            : r'name',     # name the patient  
+        'sex'             : r'sex',      # sex the patient
+        'age'             : r'age',      #  age the patient
+        'add'             : r'add',      #  add the patient
+        'remove'          : r'remove',   #  remove the patient
+        'len'             : r'len',      #  len the patient
+        'Find'            : r'Find',     
         'BreastCancer'    : r'BreastCancer',
         'OvarianCancer'   : r'OvarianCancer',
         'PancreaticCancer': r'PancreaticCancer',
@@ -102,14 +102,4 @@ def tokenize(code):
     return errors,result
 
 
-# statements = '''
-#     if (5 >= 6 )
-#     {
-#         str total = 4 ;
-#     }
-        
-# '''
-
-# #tokenize(statements)
-# print(tokenize(statements))
 
