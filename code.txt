@@ -1,1 +1,15 @@
-print 1+2;
+patient p = Patient ("Roberto","m",45);
+p.add("secrecion");
+print Find(p,"secrecion");
+print BreastCancer(p); 
+print OvarianCancer(p);
+print PancreaticCancer(p);
+p.remove("secrecion");
+print Find(p,"secrecion");
+print p.len;
+p.add("dolor");
+func f(n:int):int
+{
+ return 0;
+}
+print f(4);
