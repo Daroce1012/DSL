@@ -7,6 +7,7 @@ class Node:
 
 class ProgramNode(Node):
     def __init__(self, declarations):
+        
         self.declarations = declarations
         self.context = Context()
 
@@ -15,6 +16,10 @@ class ProgramNode(Node):
         ans = []
         for node in self.declarations:
             node.check_semantic(self.context, errors)
+            if len(errors)>0: return errors,ans
+            if isinstance(node, DeclarationNode) and (isinstance(node,IfElseExprNode) or isinstance(node,IfExprNode) or isinstance(node,ReturnNode) or isinstance(node,ForNode)  ):
+                errors.append(f' La instruccion no puede ser declarada fuera del cuerpo de una funcion \n ');
+                return errors,ans
             if isinstance(node, DeclarationNode):
                 node.execute(self.context, errors, ans)
         return errors, ans
@@ -58,109 +63,81 @@ class PatientNode(ExpressionNode):
 
 
 
-class AddNode(DeclarationNode):
-    def __init__(self, name_patient, element):
-        self.name_patient = name_patient
-        self.element = element
 
+class GetNode(ExpressionNode):
+    def __init__(self, var,attr):
+        self.var = var
+        self.attr = attr
+        
     def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.name_patient):
-            errors.append(f'Patient {self.name_patient} no definida :(')
-
-    def execute(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        patient = context.get_local_variable_info(self.name_patient)
-        element = self.element.evaluate(context, errors, ans)
-        patient.add(element) 
-
-class LenNode(ExpressionNode):
-    def __init__(self, name_patient):
-        self.name_patient = name_patient
-
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.name_patient):
-            errors.append(f'Patient {self.name_patient} no definida :(')
+        if not context.check_var_defined(self.var):  # Si la variable no esta definida
+            errors.append(f'La variable {self.var} no esta definida ')
+        elif not hasattr(context.get_local_variable_info(self.var),self.attr):      #Verifica si la variable contiene ese atributo o propiedad
+            errors.append(f' La variable {self.var} no contiene el atributo {self.attr} ') # Si la variable no contiene esa propiedad
 
     def evaluate(self, context, errors, ans):
+        var = context.get_local_variable_info(self.var)
         if len(errors) != 0:
             return
-        patient = context.get_local_variable_info(self.name_patient)
-        return patient.len()
+        return getattr(var,self.attr)
 
-class RemoveNode(DeclarationNode):
-    def __init__(self, name_patient, element):
+    
+class SetNode(DeclarationNode):
+    def __init__(self, var, attr,exp):
+        self.var = var
+        self.attr = attr
+        self.exp = exp
+
+    def check_semantic(self, context, errors):
+        if not context.check_var_defined(self.var):  # Si la variable no esta definida
+            errors.append(f'La variable {self.var} no esta definida ')    
+        elif not hasattr(context.get_local_variable_info(self.var),self.attr):
+            errors.append(f' La variable {self.var} no contiene el atributo {self.attr} ') # Si la variable no contiene esa propiedad
+
+    def execute(self, context, errors, ans):
+        if len(errors) != 0:
+            return
+        var = context.get_local_variable_info(self.var)
+        element = self.exp.evaluate(context, errors, ans)
+        setattr(var,self.attr,element)
+
+
+class AddRemoveNode(DeclarationNode):
+    def __init__(self, name_patient,func, element):
         self.name_patient = name_patient
         self.element = element
+        self.func  = func
 
     def check_semantic(self, context, errors):
         if not context.check_var_defined(self.name_patient):
-            errors.append(f'Patient {self.name_patient} no definida :(')
-
+            errors.append(f'Patient {self.name_patient} no definida ')
+        if self.func != "add" and self.func != "remove":
+            errors.append(f'Patient {self.name_patient} no contiene a {self.func} ')  
+        
     def execute(self, context, errors, ans):
         if len(errors) != 0:
             return
         patient = context.get_local_variable_info(self.name_patient)
         element = self.element.evaluate(context, errors, ans)
-        patient.remove(element) 
-
-#Atributos
-    
-
-class NameNode(DeclarationNode):
-    def __init__(self, name_patient, name):
-        self.name_patient = name_patient
-        self.name = name
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.name_patient):
-            errors.append(f'Patient {self.name_patient} no definido :(')
-
-    def execute(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        patient = context.get_local_variable_info(self.name_patient)
-        patient.name = self.name.evaluate(context, errors, ans)
-
-class AgeNode(DeclarationNode):
-    def __init__(self, name_patient, age):
-        self.name_patient = name_patient
-        self.age = age
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.name_patient):
-            errors.append(f'Patient {self.name_patient} no definido :(')
-
-    def execute(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        patient = context.get_local_variable_info(self.name_patient)
-        patient.age = self.age.evaluate(context, errors, ans)
-        
-class SexNode(DeclarationNode):
-    def __init__(self, name_patient, sex):
-        self.name_patient = name_patient
-        self.sex = sex
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.name_patient):
-            errors.append(f'Patient {self.name_patient} no definido :(')
-
-    def execute(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        patient = context.get_local_variable_info(self.name_patient)
-        patient.sex = self.sex.evaluate(context, errors, ans)
+        if self.func == "remove":
+            if patient.len > 0:patient.remove(element)
+            else: errors.append(f'Patient {patient.name} no tiene sintomas que eliminar')
+        else: patient.add(element)     
         
 
 class FuncDeclarationNode(DeclarationNode):
-    def __init__(self, idx, params, stat_list):
+    def __init__(self, idx, params, return_type, stat_list):
         self.idx = idx
-        self.params = params
-        self.stat_list = stat_list
+        self.params = params       # paramas es una lista de listas que contiene en 0 el nombre y en 1 el tipo
+        self.stat_list = stat_list # body
+        self.type = return_type    # tipo de retorno de la funcion
 
     def check_semantic(self, context, errors):
         if context.check_func_defined(self.idx, len(self.params)):
-            errors.append(f'Función {self.idx} ya declarada :(')
+            errors.append(f'Función {self.idx} ya declarada ')
         else:
             context.def_function(self)
+            
 
     def execute(self, context, errors, ans):
         pass
@@ -174,9 +151,9 @@ class ReturnNode(DeclarationNode):
         self.expr.check_semantic(context, errors)
 
     def execute(self, context, errors, ans):
-        #value = self.expr.evaluate(context, errors, ans)
-        #if not len(errors):
-            #ans.append(value)
+        value = self.expr.evaluate(context, errors, ans)
+        if not len(errors):
+            context.return_local_func.append(value)
         pass
         
 
@@ -185,23 +162,27 @@ class AttrDeclarationNode(DeclarationNode):
     def __init__(self, idx):
         self.id = idx
 
+#Arreglar este nodo
 class VarDeclarationNode(DeclarationNode):
-    def __init__(self, idx, expr):
+    def __init__(self,type ,idx, expr):
         self.idx = idx
         self.expr = expr
+        self.type = type
 
     def check_semantic(self, context, errors):
-        pass
+        if context.check_var_defined(self.idx):
+            errors.append(f'Variable {self.idx} ya definida ')
+        # Falta verificar el tipado
 
     def execute(self, context, errors, ans):
         if len(errors) != 0:
             return
-        if context.check_var_defined(self.idx):
-            errors.append(f'Variable {self.idx} ya definida :(')
         if isinstance(self.expr, ExpressionNode):
-            context.def_var(self.idx, self.expr.evaluate(context, errors, ans))
+            value = self.expr.evaluate(context, errors, ans)
+            context.def_var(self.idx, value,self.type)
+        
         else:
-            context.def_var(self.idx, self.expr)
+            context.def_var(self.idx, self.expr,self.type)
 
 class ForNode(DeclarationNode):
     def __init__(self, idx, idx_value, expr, idx_counter, counter_one, counter_two, body):
@@ -257,92 +238,8 @@ class RedefVarDeclarationNode(DeclarationNode):
                     errors.append(f'variable: {self.idx} no puede convertirse')
                 else : context.redef_var(self.idx, value)
         else:
-            errors.append(f'Variable {self.idx} no ha sido definida :(')
+            errors.append(f'Variable {self.idx} no ha sido definida ')
 
-
-class IntVarDeclarationNode(DeclarationNode):
-    def __init__(self, idx, expr):
-        self.idx = idx
-        self.expr = expr
-
-    def check_semantic(self, context, errors):
-        pass
-
-    def execute(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        if context.check_var_defined(self.idx):
-            errors.append(f'Variable {self.idx} ya definida :(')
-        if isinstance(self.expr, ExpressionNode):
-            value = self.expr.evaluate(context, errors, ans)
-            if not isinstance(value,int):
-                errors.append(f'variable: {self.idx} no puede convertirse a entero')
-            else : context.def_var(self.idx, value)
-        else:
-            context.def_var(self.idx, self.expr)
-
-class StrVarDeclarationNode(DeclarationNode):
-    def __init__(self, idx, expr):
-        self.idx = idx
-        self.expr = expr
-
-    def check_semantic(self, context, errors):
-        pass
-
-    def execute(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        if context.check_var_defined(self.idx):
-            errors.append(f'Variable {self.idx} ya definida :(')
-        if isinstance(self.expr, ExpressionNode):
-            value = self.expr.evaluate(context, errors, ans)
-            if not isinstance(value,str):
-                errors.append(f'variable: {self.idx} no puede convertirse a string')
-            else : context.def_var(self.idx, value)
-        else:
-            context.def_var(self.idx, self.expr)
-
-class BoolVarDeclarationNode(DeclarationNode):
-    def __init__(self, idx, expr):
-        self.idx = idx
-        self.expr = expr
-
-    def check_semantic(self, context, errors):
-        pass
-
-    def execute(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        if context.check_var_defined(self.idx):
-            errors.append(f'Variable {self.idx} ya definida :(')
-        if isinstance(self.expr, ExpressionNode):
-            value =  self.expr.evaluate(context, errors, ans)
-            if not isinstance(value,bool):
-                errors.append(f'variable: {self.idx} no puede convertirse a bool')
-            else : context.def_var(self.idx, value)
-        else:
-            context.def_var(self.idx, self.expr)
-            
-class PatientVarDeclarationNode(DeclarationNode):
-    def __init__(self, idx, expr):
-        self.idx = idx
-        self.expr = expr
-
-    def check_semantic(self, context, errors):
-        pass
-
-    def execute(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        if context.check_var_defined(self.idx):
-            errors.append(f'Variable {self.idx} ya definida :(')
-        if isinstance(self.expr, ExpressionNode):
-            value = self.expr.evaluate(context, errors, ans)
-            if not isinstance(value,Patient):
-                errors.append(f'variable: {self.idx} no puede convertirse a Patient')
-            else : context.def_var(self.idx, value)
-        else:
-            context.def_var(self.idx, self.expr)
 
 
 class IfExprNode(DeclarationNode):
@@ -390,19 +287,23 @@ class CallNode(ExpressionNode):
 
     def check_semantic(self, context, errors):
         if not context.check_func_defined(self.idx, len(self.args)):
-            errors.append(f'Función {self.idx} no definida :(')
-
+            errors.append(f'Función {self.idx} no definida ')
+    
+    def execute(self, context, errors, ans): # Si se llama a una funcion como orden o declaracion entonces no hace nada 
+        pass
+    
     def evaluate(self, context, errors, ans):
         if len(errors) != 0:
             return
-        func = context.get_local_function_info(self.idx, len(self.args))
-        child = context.create_child_context()
+        func = context.get_function_info(self.idx, len(self.args))
+        child = context.create_child_context() # Context de la funcion llamada
         for i, p in enumerate(func.params):
-            child.def_var(p, self.args[i].evaluate(context, errors, ans))
+            child.def_var(p[0], self.args[i].evaluate(context, errors, ans),p[1]) #Se crean variables para guardar los parametros de entrada
         for stat in func.stat_list:
-            if isinstance(stat, ReturnNode):
-                return stat.expr.evaluate(child, errors, ans)
             stat.execute(child, errors, ans)
+            returns = child.return_local_func
+            if len(returns) > 0: return returns[0]
+            
         return None
 
 
@@ -455,12 +356,12 @@ class VariableNode(AtomicNode):
 
     def check_semantic(self, context, errors):
         if not context.check_var_defined(self.idx):
-            errors.append(f'Variable {self.idx} no definida :(')
+            errors.append(f'Variable {self.idx} no definida ')
 
     def evaluate(self, context, errors, ans):
         var = context.get_local_variable_info(self.idx)
         if var is None:
-            errors.append(f'Variable {self.idx} no definida :(')
+            errors.append(f'Variable {self.idx} no definida ')
             return
         return var
 
@@ -481,7 +382,7 @@ class AndNode(BinaryNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, bool]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "and" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "and" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue and rvalue
 
@@ -502,7 +403,7 @@ class OrNode(BinaryNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, bool]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "or" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "or" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue or rvalue
 
@@ -523,7 +424,7 @@ class PlusNode(BinaryNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "+" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "+" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue + rvalue
 
@@ -544,7 +445,7 @@ class MinusNode(BinaryNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "-" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "-" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue - rvalue
 
@@ -565,7 +466,7 @@ class StarNode(BinaryNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "*" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "*" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue * rvalue
 
@@ -586,7 +487,7 @@ class DivNode(BinaryNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "/" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "/" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue / rvalue
 
@@ -607,7 +508,7 @@ class LeqNode(ExpressionNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "<=" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "<=" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue <= rvalue
 
@@ -628,7 +529,7 @@ class GeqNode(ExpressionNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación ">=" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación ">=" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue >= rvalue
 
@@ -649,7 +550,7 @@ class EqualNode(ExpressionNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "==" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "==" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue == rvalue
 
@@ -670,7 +571,7 @@ class NotNode(ExpressionNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "!=" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "!=" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue != rvalue
 
@@ -691,7 +592,7 @@ class LessNode(ExpressionNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación "<" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación "<" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue < rvalue
 
@@ -712,7 +613,7 @@ class GreaterNode(ExpressionNode):
             rvalue = rvalue.evaluate(context, errors, ans)
         _type = [int, float]
         if not _type.__contains__(type(lvalue)) or not _type.__contains__(type(rvalue)):
-            errors.append(f'Operación ">" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida :( ')
+            errors.append(f'Operación ">" entre un tipo {type(lvalue)} y un tipo {type(rvalue)} no definida  ')
             return
         return lvalue > rvalue
 
@@ -731,29 +632,6 @@ class ListExprNode(ExpressionNode):
         for i in self.list_expr:
             listx.append(i.evaluate(context, errors, ans))
         return listx
-
-
-class ListGetNode(ExpressionNode):
-    def __init__(self, name, pos):
-        self.name = name
-        self.pos = pos
-
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.name):
-            errors.append(f'Lista {self.name} no definida :(')
-            return
-        pos = self.pos.evaluate(context, errors, None)
-        if pos < 0 or pos >= len(context.get_local_variable_info(self.name)):
-            errors.append(f'Posición {pos} fuera de rango :(')
-
-    def evaluate(self, context, errors, ans):
-        if len(errors) != 0:
-            return
-        listx = context.get_local_variable_info(self.name)
-        pos = self.pos.evaluate(context, errors, ans)
-        if len(errors) == 0:
-            return listx[pos]
-        return None
 
 
 class PrintNode(DeclarationNode):
@@ -778,7 +656,7 @@ class FindNode(ExpressionNode):
 
     def check_semantic(self, context, errors):
         if not context.check_var_defined(self.patient):
-            errors.append(f'Patient {self.patient} no definido :(')
+            errors.append(f'Patient {self.patient} no definido ')
 
     def evaluate(self, context, errors, ans):
         patient = context.get_local_variable_info(self.patient)
@@ -787,85 +665,24 @@ class FindNode(ExpressionNode):
             return
         return Find(patient,self.condition)
 
-class BreastCancerNode(ExpressionNode):
-    def __init__(self, patient):
+class CancerNode(ExpressionNode):
+    def __init__(self,cancer ,patient):
         self.patient = patient
+        self.cancer = cancer
 
     def check_semantic(self, context, errors):
         if not context.check_var_defined(self.patient):
-            errors.append(f'Patient {self.patient} no definido :(')
-
+            errors.append(f'Patient {self.patient} no definido ')
+        if self.cancer != "BreastCancer" and self.cancer != "OvarianCancer" and self.cancer != "PancreaticCancer":
+            errors.append(f'{self.cancer} no existe')  
+      
     def evaluate(self, context, errors, ans):
         patient = context.get_local_variable_info(self.patient)
         if len(errors) != 0:
             return
-        return BreastCancer(patient)
-
-class OvarianCancerNode(ExpressionNode):
-    def __init__(self, patient):
-        self.patient = patient
-
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.patient):
-            errors.append(f'Patient {self.patient} no definido :(')
-
-    def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.patient)
-        if len(errors) != 0:
-            return
-        return OvarianCancer(patient)
-
-class PancreaticCancerNode(ExpressionNode):
-    def __init__(self, patient):
-        self.patient = patient
-
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.patient):
-            errors.append(f'Patient {self.patient} no definido :(')
-
-    def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.patient)
-        if len(errors) != 0:
-            return
-        return PancreaticCancer(patient)
-
-class GetNameNode(ExpressionNode):
-    def __init__(self, patient):
-        self.patient = patient
-
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.patient):
-            errors.append(f'Patient {self.patient} no definido :(')
-
-    def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.patient)
-        if len(errors) != 0:
-            return
-        return patient.name
-class GetSexNode(ExpressionNode):
-    def __init__(self, patient):
-        self.patient = patient
-
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.patient):
-            errors.append(f'Patient {self.patient} no definido :(')
-
-    def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.patient)
-        if len(errors) != 0:
-            return
-        return patient.sex
-class GetAgeNode(ExpressionNode):
-    def __init__(self, patient):
-        self.patient = patient
-
-    def check_semantic(self, context, errors):
-        if not context.check_var_defined(self.patient):
-            errors.append(f'Patient {self.patient} no definido :(')
-
-    def evaluate(self, context, errors, ans):
-        patient = context.get_local_variable_info(self.patient)
-        if len(errors) != 0:
-            return
-        return patient.age
+        if self.cancer =="BreastCancer": 
+            return BreastCancer(patient)
+        elif self.cancer =="OvarianCancer":
+            return OvarianCancer(patient)
+        else: return PancreaticCancer(patient) 
 

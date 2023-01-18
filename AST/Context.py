@@ -4,20 +4,25 @@
 # De las variables nos interesa su nombre y de las funciones su nombre y el de sus parámetros.
 
 class Variable:
-    def __init__(self, name, value):
+    def __init__(self, name, value,type):
         self.name = name
         self.value = value
+        self.type = type
 
 class Function:
     def __init__(self, func):
         self.name = func.idx
         self.params = func.params
+        #self.type_paramas = 
+        self.type = func.type     #Tipo de retorno de la funcion
         self.stat_list = func.stat_list
+                       
 
 class Context:
     def __init__(self, parent=None):
         self.local_var = []
         self.local_func = []
+        self.return_local_func = []
         self.children_context = []
         self.parent = parent
 
@@ -26,8 +31,8 @@ class Context:
         self.children_context.append(children_context)
         return children_context
 
-    def def_var(self, name, value):
-        var = Variable(name, value)
+    def def_var(self, name, value,type):
+        var = Variable(name, value,type)
         self.local_var.append(var)
 
     def redef_var(self, name, value):
@@ -61,16 +66,16 @@ class Context:
         for var in self.local_var:
             if var.name == name:
                 return var.value
-        if self.parent is None:
-            return None
-        else:
-            return self.parent.get_local_variable_info(name)
+        # if self.parent is None:
+        #     return None
+        # else:
+        #     return self.parent.get_local_variable_info(name)
 
-    def get_local_function_info(self, name, num_params):
+    def get_function_info(self, name, num_params):
         for func in self.local_func:
             if func.name == name and len(func.params) == num_params:
                 return func
         if self.parent is None:
             return None
         else:
-            return self.parent.get_local_function_info(name, num_params)
+            return self.parent.get_function_info(name, num_params)

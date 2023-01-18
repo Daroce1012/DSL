@@ -12,25 +12,25 @@ def tokenize(code):
     
     tokens = {
         'eof'    : r'eof',               # eof
-        'int'    : r'int',               # int    
-        'str'    : r'str',               # str    
-        'bool'   : r'bool',              # bool
+        #'int'    : r'int',               # int    
+        #'str'    : r'str',               # str    
+        #'bool'   : r'bool',              # bool
         'Patient': r'Patient',           # Patient
         'if'     : r'if',                # if
         'else'   : r'else',              # else
         'for'    : r'for',               # for
         'func'   : r'func',              # func
         
-        'name'            : r'name',     # name the patient  
-        'sex'             : r'sex',      # sex the patient
-        'age'             : r'age',      #  age the patient
-        'add'             : r'add',      #  add the patient
-        'remove'          : r'remove',   #  remove the patient
-        'len'             : r'len',      #  len the patient
+       # 'name'            : r'name',     # name the patient  
+       # 'sex'             : r'sex',      # sex the patient
+       # 'age'             : r'age',      #  age the patient
+       # 'add'             : r'add',      #  add the patient
+       # 'remove'          : r'remove',   #  remove the patient
+       # 'len'             : r'len',      #  len the patient
         'Find'            : r'Find',     
-        'BreastCancer'    : r'BreastCancer',
-        'OvarianCancer'   : r'OvarianCancer',
-        'PancreaticCancer': r'PancreaticCancer',
+        #'BreastCancer'    : r'BreastCancer',
+        #'OvarianCancer'   : r'OvarianCancer',
+        #'PancreaticCancer': r'PancreaticCancer',
        
         # Comparison operators
         'leq'    : r'<=',                # less than or equal
@@ -47,7 +47,7 @@ def tokenize(code):
         
         'comma'    : r',',               # comma
         'semi'     : r';',               # ;
-        #'colon': r':',                  # :
+        'colon': r':',                   # :
         #'quotation':r'"',               # "
         'dot'      : r'\.',              # . 
         

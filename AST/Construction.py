@@ -19,7 +19,7 @@ def construction_ast(parser_lr1, operations, tokens):
             if len(body):
                 synteticed = [None] + stack[-len(body):]
                 value = rule(None, synteticed)
-                stack[-len(body):] = [value]
+                stack[-len(body):] = [value]           #Solo se inicializa el nodo
             else:
                 stack.append(rule(None, None))
         else:
